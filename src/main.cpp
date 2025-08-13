@@ -5,6 +5,8 @@
 #include <sstream> 
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 std::array<std::string, 3> prefix = {"echo", "type", "exit"};
 
@@ -13,7 +15,7 @@ enum class Commands
     EXIT,
     ECHO,
     TYPE,
-    NOT_FOUND
+    EXTERNAL
 };
 
 Commands command(const std::string& input)
@@ -21,7 +23,7 @@ Commands command(const std::string& input)
     if(input.substr(0, prefix[2].size()) == prefix[2]) return Commands::EXIT;
     else if (input.substr(0, prefix[0].size()) == prefix[0]) return Commands::ECHO;
     else if (input.substr(0, prefix[1].size()) == prefix[1]) return Commands::TYPE;
-    else return Commands::NOT_FOUND;
+    else return Commands::EXTERNAL;
 }
 
 bool is_shell_command(const std::string& cmd) 
@@ -99,9 +101,34 @@ int main()
                 break;
             }   
 
-            case Commands::NOT_FOUND:
-                std::cout << input << ": command not found" << std::endl;
+            case Commands::EXTERNAL:
+            {
+                std::vector<std::string> args = split(input, ' ');
+                if(args.empty()) break;
+
+                std::vector<char*> argv;
+                for(auto& arg : args)
+                    argv.push_back(&arg[0]);
+                argv.push_back(nullptr);
+
+                pid_t pid = fork();
+                if(pid == 0)
+                {
+                    execvp(argv[0], argv.data());
+                    std::cerr << argv[0] << ": command not found" << std::endl;
+                    exit(1);
+                }
+                else if(pid > 0)
+                {
+                    int status;
+                    waitpid(pid, &status, 0);
+                }
+                else
+                {
+                    std::cerr << "Fork failed" << std::endl;    
+                }
                 break;
+            }
         }
 
         std::cout << "$ " << std::unitbuf;
