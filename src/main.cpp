@@ -11,7 +11,11 @@ int main()
     for(;;)
     {
         std::getline(std::cin, input);
-        std::cout << input << ": command not found" << std::endl;
+        if (input == "exit 0")
+            break;
+        else 
+            std::cout << input << ": command not found" << std::endl;
+
         std::cout << "$ " << std::unitbuf;
         std::cerr << std::unitbuf;
     }
