@@ -1,6 +1,10 @@
 #include <iostream>
 #include <string>
 #include <array>
+#include <vector>
+#include <sstream> 
+#include <unistd.h>
+#include <sys/stat.h>
 
 std::array<std::string, 3> prefix = {"echo", "type", "exit"};
 
@@ -30,6 +34,35 @@ bool is_shell_command(const std::string& cmd)
     return false;
 }
 
+std::vector<std::string> split(const std::string& str, char dalimiter)
+{
+    std::vector<std::string> result;
+    std::stringstream ss(str);
+    std::string item;
+
+    while(std::getline(ss, item, dalimiter))
+        result.push_back(item);
+
+    return result;
+}
+
+std::string find_command_in_path(const std::string& com)
+{
+    char* path_env = std::getenv("PATH");
+    if(!path_env) return "";
+
+    std::vector<std::string> dirs = split(path_env, ':');
+    for(const auto& dir : dirs)
+    {
+        std::string full_path = dir + "/" + com;
+        if(access(full_path.c_str(), X_OK) == 0)
+        {
+            return full_path;
+        }
+    }
+    return "";
+}
+
 int main() 
 {
     std::string input;
@@ -56,7 +89,13 @@ int main()
                 if(is_shell_command(arg))
                     std::cout << arg << " is a shell builtin" << std::endl;
                 else
-                    std::cout << arg << ": not found" << std::endl;
+                {
+                    std::string found = find_command_in_path(arg);
+                    if(!found.empty())
+                        std::cout << arg << " is " << found << std::endl;
+                    else
+                        std::cout << arg << ": not found" << std::endl;
+                }
                 break;
             }   
 
