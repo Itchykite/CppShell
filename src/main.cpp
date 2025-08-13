@@ -15,7 +15,6 @@ int main()
 
         if(input == "exit 0")
         {
-            std::cout << "Bye!" << std::endl;
             return 0;
         }
         else if(input.substr(0, prefix[0].size()) == prefix[0])
