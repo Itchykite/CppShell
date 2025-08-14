@@ -7,25 +7,30 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <limits.h>
 
-std::array<std::string, 3> prefix = {"echo", "type", "exit"};
+std::array<std::string, 4> prefix = {"echo", "type", "exit", "pwd"};
 
 enum class Commands
 {
     EXIT,
     ECHO,
     TYPE,
+    PWD,
     EXTERNAL
 };
 
+// Komendy
 Commands command(const std::string& input)
 {
     if(input.substr(0, prefix[2].size()) == prefix[2]) return Commands::EXIT;
     else if (input.substr(0, prefix[0].size()) == prefix[0]) return Commands::ECHO;
     else if (input.substr(0, prefix[1].size()) == prefix[1]) return Commands::TYPE;
+    else if (input.substr(0, prefix[3].size()) == prefix[3]) return Commands::PWD;
     else return Commands::EXTERNAL;
 }
 
+// Sprawdza czy komenda jest wbudowana w powłokę
 bool is_shell_command(const std::string& cmd) 
 {
     for(const std::string& c : prefix)
@@ -33,21 +38,63 @@ bool is_shell_command(const std::string& cmd)
         if(cmd == c.c_str())
             return true;
     }
+
     return false;
 }
 
-std::vector<std::string> split(const std::string& str, char dalimiter)
+// Parsuje argumenty z linii poleceń, uwzględniając cudzysłowy
+std::vector<std::string> parse_args(const std::string& line) 
+{
+    std::vector<std::string> args;
+    std::string arg;
+    bool in_quotes = false;
+    char quote_char = 0;
+
+    for (size_t i = 0; i < line.size(); ++i) 
+    {
+        char c = line[i];
+        if (!in_quotes && (c == '"' || c == '\'')) 
+        {
+            in_quotes = true;
+            quote_char = c;
+        }
+        else if (in_quotes && c == quote_char) 
+        {
+            in_quotes = false;
+        } 
+        else if (!in_quotes && std::isspace(c)) 
+        {
+            if (!arg.empty()) 
+            {
+                args.push_back(arg);
+                arg.clear();
+            }
+        } 
+        else 
+    {
+            arg += c;
+        }
+    }
+
+    if (!arg.empty()) args.push_back(arg);
+
+    return args;
+}
+
+// Funkcja dzieli string na części według podanego delimitera
+std::vector<std::string> split(const std::string& str, char delimiter)
 {
     std::vector<std::string> result;
     std::stringstream ss(str);
     std::string item;
 
-    while(std::getline(ss, item, dalimiter))
+    while(std::getline(ss, item, delimiter))
         result.push_back(item);
 
     return result;
 }
 
+// Funkcja znajduje pełną ścieżkę do komendy w zmiennej środowiskowej PATH
 std::string find_command_in_path(const std::string& com)
 {
     char* path_env = std::getenv("PATH");
@@ -78,9 +125,28 @@ int main()
         switch(command(input))
         {
             case Commands::EXIT:
-                return 0;
+            {
+                size_t pos = prefix[2].size();
+                if (input.size() > pos && input[pos] == ' ') 
+                {
+                    std::string exit_code = input.substr(pos + 1);
+                    if (exit_code.empty()) 
+                    {
+                        return 0;
+                    } 
+                    else 
+                    {
+                        int code = std::stoi(exit_code);
+                        return code;
+                    }
+                } 
+                else 
+                {
+                    return 0;
+                }
                 break;
-        
+            }
+
             case Commands::ECHO:
                 std::cout << input.substr(prefix[0].size() + 1) << std::endl;
                 break;
@@ -99,11 +165,21 @@ int main()
                         std::cout << arg << ": not found" << std::endl;
                 }
                 break;
-            }   
+            }  
+
+            case Commands::PWD:
+            {
+                char cwd[PATH_MAX];
+                if(getcwd(cwd, sizeof(cwd)) != nullptr)
+                    std::cout << cwd << std::endl;
+                else
+                    std::cerr << "Error getting current working directory" << std::endl;
+                break; 
+            }
 
             case Commands::EXTERNAL:
             {
-                std::vector<std::string> args = split(input, ' ');
+                std::vector<std::string> args = parse_args(input); 
                 if(args.empty()) break;
 
                 std::vector<char*> argv;
