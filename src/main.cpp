@@ -153,7 +153,7 @@ int main()
             case Commands::ECHO:
             {
                 size_t pos = prefix[0].size();
-                if (input.size() > pos && input[pos] == ' ')
+                if(input.size() > pos && input[pos] == ' ')
                 {
                     std::string line = input.substr(pos + 1);
 
@@ -162,7 +162,7 @@ int main()
                     bool in_quotes = false;
                     char quote_char = 0;
 
-                    for (size_t i = 0; i < line.size(); ++i)
+                    for(size_t i = 0; i < line.size(); ++i)
                     {
                         char c = line[i];
                         if (!in_quotes && (c == '"' || c == '\''))
@@ -170,13 +170,23 @@ int main()
                             in_quotes = true;
                             quote_char = c;
                         }
-                        else if (in_quotes && c == quote_char)
+                        else if(in_quotes && c == quote_char)
                         {
                             in_quotes = false;
                         }
-                        else if (!in_quotes && std::isspace(static_cast<unsigned char>(c)))
+                        else if(!in_quotes && c == '\\')
                         {
-                            if (!arg.empty())
+                            if (!in_quotes && i + 1 < line.size() && line[i + 1] == ' ')
+                            {
+                                arg += ' ';
+                                ++i; 
+                            }
+                            else 
+                                arg += '\\';
+                        }
+                        else if(!in_quotes && std::isspace(static_cast<unsigned char>(c)))
+                        {
+                            if(!arg.empty())
                             {
                                 args.push_back(arg);
                                 arg.clear();
@@ -187,17 +197,18 @@ int main()
                             arg += c;
                         }
                     }
+
                     if (!arg.empty())
                         args.push_back(arg);
 
                     std::vector<std::string> filtered;
                     for (const auto& a : args)
                     {
-                        if (!a.empty())
+                        if(!a.empty())
                             filtered.push_back(a);
                     }
 
-                    if (!filtered.empty())
+                    if(!filtered.empty())
                     {
                         for (size_t i = 0; i < filtered.size(); ++i)
                         {
