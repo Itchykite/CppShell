@@ -8,8 +8,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <limits.h>
+#include <filesystem>
 
-std::array<std::string, 4> prefix = {"echo", "type", "exit", "pwd"};
+std::array<std::string, 5> prefix = {"echo", "type", "exit", "pwd", "cd"};
 
 enum class Commands
 {
@@ -17,6 +18,7 @@ enum class Commands
     ECHO,
     TYPE,
     PWD,
+    CD,
     EXTERNAL
 };
 
@@ -27,6 +29,7 @@ Commands command(const std::string& input)
     else if (input.substr(0, prefix[0].size()) == prefix[0]) return Commands::ECHO;
     else if (input.substr(0, prefix[1].size()) == prefix[1]) return Commands::TYPE;
     else if (input.substr(0, prefix[3].size()) == prefix[3]) return Commands::PWD;
+    else if (input.substr(0, prefix[4].size()) == prefix[4]) return Commands::CD;
     else return Commands::EXTERNAL;
 }
 
@@ -169,12 +172,36 @@ int main()
 
             case Commands::PWD:
             {
-                char cwd[PATH_MAX];
-                if(getcwd(cwd, sizeof(cwd)) != nullptr)
-                    std::cout << cwd << std::endl;
-                else
-                    std::cerr << "Error getting current working directory" << std::endl;
+                std::string current_path = std::filesystem::current_path().string();
+                std::cout << current_path << std::endl;
+
                 break; 
+            }
+
+            case Commands::CD:
+            {
+                size_t path = prefix[4].size();
+                if (input.size() > path && input[path] == ' ') 
+                {
+                    std::string new_path = input.substr(path + 1);
+                    if(new_path.empty())
+                    {
+                        std::cerr << "cd: missing argument" << std::endl;
+                    }
+                    else if(chdir(new_path.c_str()) != 0)
+                    {
+                        std::cerr << "cd: " << new_path << ": No such file or directory" << std::endl;
+                    }
+                    else
+                    {
+                        std::string current_path = std::filesystem::current_path().string();
+                    }
+                }
+                else
+                {
+                    std::cerr << "cd: missing argument" << std::endl;
+                }
+                break;
             }
 
             case Commands::EXTERNAL:
