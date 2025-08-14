@@ -169,7 +169,7 @@ int main()
                             is_quoted = true;
                             message = message.substr(1, message.size() - 2);
                         }
-
+                       
                         if(!is_quoted)
                         {
                             std::string reduced;
@@ -181,6 +181,14 @@ int main()
                                     if(!in_space)
                                     {
                                         reduced += ' ';
+                                        in_space = true;
+                                    }
+                                }
+                                else if(c == '\'' && c++ == '\'')
+                                {
+                                    if(!in_space)
+                                    {
+                                        reduced += c;
                                         in_space = true;
                                     }
                                 }
