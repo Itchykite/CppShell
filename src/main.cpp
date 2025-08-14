@@ -179,6 +179,16 @@ int main()
                             ++i;
                             arg += line[i];
                         }
+                        else if(!in_quotes && c == '\\' && i + 1 < line.size() && line[i + 1] == 'n')
+                        {
+                            arg += '\n';
+                            ++i; 
+                        }
+                        else if(!in_quotes && c == '\\' && i + 1 < line.size() && line[i + 1] == 't')
+                        {
+                            arg += '\t';
+                            ++i; 
+                        }
                         else if(!in_quotes && c == '\\' && i + 1 < line.size() && std::isspace(static_cast<unsigned char>(line[i + 1])))
                         {
                             if (!in_quotes && i + 1 < line.size() && line[i + 1] == ' ')
