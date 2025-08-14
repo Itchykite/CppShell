@@ -174,7 +174,12 @@ int main()
                         {
                             in_quotes = false;
                         }
-                        else if(!in_quotes && c == '\\')
+                        else if(!in_quotes && c == '\\' && i + 1 < line.size() && (line[i + 1] == '"' || line[i + 1] == '\'' || line[i + 1] == '\\'))
+                        {
+                            ++i;
+                            arg += line[i];
+                        }
+                        else if(!in_quotes && c == '\\' && i + 1 < line.size() && std::isspace(static_cast<unsigned char>(line[i + 1])))
                         {
                             if (!in_quotes && i + 1 < line.size() && line[i + 1] == ' ')
                             {
