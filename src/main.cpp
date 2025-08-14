@@ -188,6 +188,14 @@ int main()
                     {
                         std::cerr << "cd: missing argument" << std::endl;
                     }
+                    else if(new_path == "~")
+                    {
+                        const char* home = std::getenv("HOME");    
+                        if(chdir(home) != 0)
+                        {
+                            std::cerr << "cd: " << home << ": No such file or directory" << std::endl;
+                        }
+                    }
                     else if(chdir(new_path.c_str()) != 0)
                     {
                         std::cerr << "cd: " << new_path << ": No such file or directory" << std::endl;
