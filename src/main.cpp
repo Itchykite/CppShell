@@ -151,8 +151,70 @@ int main()
             }
 
             case Commands::ECHO:
-                std::cout << input.substr(prefix[0].size() + 1) << std::endl;
+            {
+                size_t pos = prefix[0].size();
+                if (input.size() > pos && input[pos] == ' ')
+                {
+                    std::string message = input.substr(pos + 1);
+                    bool is_quoted = false;
+                    if(!message.empty())
+                    {
+                        if(message.front() == '"' && message.back() == '"')
+                        {
+                            is_quoted = true;
+                            message = message.substr(1, message.size() - 2);
+                        }
+                        else if(message.front() == '\'' && message.back() == '\'')
+                        {
+                            is_quoted = true;
+                            message = message.substr(1, message.size() - 2);
+                        }
+
+                        if(!is_quoted)
+                        {
+                            std::string reduced;
+                            bool in_space = false;
+                            for(char c : message)
+                            {
+                                if(std::isspace(static_cast<unsigned char>(c)))
+                                {
+                                    if(!in_space)
+                                    {
+                                        reduced += ' ';
+                                        in_space = true;
+                                    }
+                                }
+                                else
+                                {
+                                    reduced += c;
+                                    in_space = false;
+                                }
+                            }
+
+                            size_t first_non_space = reduced.find_first_not_of(' ');
+                            size_t last_non_space = reduced.find_last_not_of(' ');
+                            if(first_non_space != std::string::npos && last_non_space != std::string::npos)
+                                message = reduced.substr(first_non_space, last_non_space - first_non_space + 1);
+                            else
+                                message.clear();
+                        }
+
+                        if(!message.empty())
+                            std::cout << message << std::endl;
+                        else 
+                            std::cerr << "echo: missing argument" << std::endl;
+                    }
+                    else 
+                    {
+                        std::cerr << "echo: missing argument" << std::endl;
+                    }
+                }
+                else 
+                {
+                    std::cerr << "echo: missing argument" << std::endl;
+                }
                 break;
+            }
 
             case Commands::TYPE:
             {
