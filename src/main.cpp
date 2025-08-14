@@ -156,6 +156,7 @@ int main()
                 if(input.size() > pos && input[pos] == ' ')
                 {
                     std::string line = input.substr(pos + 1);
+                    std::vector<char> special_chars = {'n', 't', 'r', 'b', 'f', 'a', 'v'};;
 
                     std::vector<std::string> args;
                     std::string arg;
@@ -179,15 +180,37 @@ int main()
                             ++i;
                             arg += line[i];
                         }
-                        else if(!in_quotes && c == '\\' && i + 1 < line.size() && line[i + 1] == 'n')
+                        else if (in_quotes && c == '\\' && i + 1 < line.size()) 
                         {
-                            arg += '\n';
-                            ++i; 
+                            char next = line[i + 1];
+                            switch (next) 
+                            {
+                                case 'n': arg += '\n'; break;
+                                case 't': arg += '\t'; break;
+                                case 'r': arg += '\r'; break;
+                                case 'b': arg += '\b'; break;
+                                case 'f': arg += '\f'; break;
+                                case 'a': arg += '\a'; break;
+                                case 'v': arg += '\v'; break;
+                                default: arg += next; break; 
+                            }
+                            ++i;
                         }
-                        else if(!in_quotes && c == '\\' && i + 1 < line.size() && line[i + 1] == 't')
+                        else if(!in_quotes && c == '\\' && i + 1 < line.size())
                         {
-                            arg += '\t';
-                            ++i; 
+                            char next = line[i + 1];
+                            switch (next) 
+                            {
+                                case 'n': arg += line[i + 1]; break;
+                                case 't': arg += line[i + 1]; break;
+                                case 'r': arg += line[i + 1]; break;
+                                case 'b': arg += line[i + 1]; break;
+                                case 'f': arg += line[i + 1]; break;
+                                case 'a': arg += line[i + 1]; break;
+                                case 'v': arg += line[i + 1]; break;
+                                default: arg += next; break; 
+                            }
+                            i++;
                         }
                         else if(!in_quotes && c == '\\' && i + 1 < line.size() && std::isspace(static_cast<unsigned char>(line[i + 1])))
                         {
