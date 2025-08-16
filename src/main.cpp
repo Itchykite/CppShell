@@ -153,34 +153,40 @@ int main()
             case Commands::ECHO:
             {
                 size_t pos = prefix[0].size();
-                if(input.size() > pos && input[pos] == ' ')
+                if (input.size() > pos && input[pos] == ' ') 
                 {
                     std::string line = input.substr(pos + 1);
-                    std::vector<char> special_chars = {'n', 't', 'r', 'b', 'f', 'a', 'v'};;
-
                     std::vector<std::string> args;
                     std::string arg;
-                    bool in_quotes = false;
-                    char quote_char = 0;
+                    bool in_single_quotes = false;
+                    bool in_double_quotes = false;
 
-                    for(size_t i = 0; i < line.size(); ++i)
+                    for (size_t i = 0; i < line.size(); ++i) 
                     {
                         char c = line[i];
-                        if (!in_quotes && (c == '"' || c == '\''))
+
+                        if (!in_single_quotes && c == '"' && !in_double_quotes) 
                         {
-                            in_quotes = true;
-                            quote_char = c;
+                            in_double_quotes = true;
+                            continue;
                         }
-                        else if(in_quotes && c == quote_char)
+                        if (!in_double_quotes && c == '\'' && !in_single_quotes) 
                         {
-                            in_quotes = false;
+                            in_single_quotes = true;
+                            continue;
                         }
-                        else if(!in_quotes && c == '\\' && i + 1 < line.size() && (line[i + 1] == '"' || line[i + 1] == '\'' || line[i + 1] == '\\'))
+                        if (in_double_quotes && c == '"') 
                         {
-                            ++i;
-                            arg += line[i];
+                            in_double_quotes = false;
+                            continue;
                         }
-                        else if (in_quotes && c == '\\' && i + 1 < line.size()) 
+                        if (in_single_quotes && c == '\'') 
+                        {
+                            in_single_quotes = false;
+                            continue;
+                        }
+
+                        if (in_double_quotes && c == '\\' && i + 1 < line.size()) 
                         {
                             char next = line[i + 1];
                             switch (next) 
@@ -192,76 +198,45 @@ int main()
                                 case 'f': arg += '\f'; break;
                                 case 'a': arg += '\a'; break;
                                 case 'v': arg += '\v'; break;
-                                default: arg += next; break; 
+                                case '\\': arg += '\\'; break;
+                                case '"': arg += '"'; break;
+                                default: arg += next; break;
                             }
                             ++i;
+                            continue;
                         }
-                        else if(!in_quotes && c == '\\' && i + 1 < line.size())
+
+                        if (!in_single_quotes && !in_double_quotes && std::isspace(static_cast<unsigned char>(c))) 
                         {
-                            char next = line[i + 1];
-                            switch (next) 
-                            {
-                                case 'n': arg += line[i + 1]; break;
-                                case 't': arg += line[i + 1]; break;
-                                case 'r': arg += line[i + 1]; break;
-                                case 'b': arg += line[i + 1]; break;
-                                case 'f': arg += line[i + 1]; break;
-                                case 'a': arg += line[i + 1]; break;
-                                case 'v': arg += line[i + 1]; break;
-                                default: arg += next; break; 
-                            }
-                            i++;
-                        }
-                        else if(!in_quotes && c == '\\' && i + 1 < line.size() && std::isspace(static_cast<unsigned char>(line[i + 1])))
-                        {
-                            if (!in_quotes && i + 1 < line.size() && line[i + 1] == ' ')
-                            {
-                                arg += ' ';
-                                ++i; 
-                            }
-                            else 
-                                arg += '\\';
-                        }
-                        else if(!in_quotes && std::isspace(static_cast<unsigned char>(c)))
-                        {
-                            if(!arg.empty())
+                            if (!arg.empty()) 
                             {
                                 args.push_back(arg);
                                 arg.clear();
                             }
+                            continue;
                         }
-                        else
-                        {
-                            arg += c;
-                        }
-                    }
 
+                        arg += c;
+                    }
                     if (!arg.empty())
                         args.push_back(arg);
 
-                    std::vector<std::string> filtered;
-                    for (const auto& a : args)
+                    if (!args.empty()) 
                     {
-                        if(!a.empty())
-                            filtered.push_back(a);
-                    }
-
-                    if(!filtered.empty())
-                    {
-                        for (size_t i = 0; i < filtered.size(); ++i)
+                        for (size_t i = 0; i < args.size(); ++i) 
                         {
                             if (i > 0)
                                 std::cout << " ";
-                            std::cout << filtered[i];
+                            std::cout << args[i];
                         }
                         std::cout << std::endl;
-                    }
-                    else
+                    } 
+                    else 
                     {
                         std::cerr << "echo: missing argument" << std::endl;
                     }
-                }
-                else
+                } 
+                else 
                 {
                     std::cerr << "echo: missing argument" << std::endl;
                 }
