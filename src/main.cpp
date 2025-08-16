@@ -205,6 +205,12 @@ int main()
                             ++i;
                             continue;
                         }
+                        if (!in_single_quotes && !in_double_quotes && c == '\\' && i + 1 < line.size() && line[i + 1] == ' ') 
+                        {
+                            arg += ' ';
+                            ++i;
+                            continue;
+                        }
 
                         if (!in_single_quotes && !in_double_quotes && std::isspace(static_cast<unsigned char>(c))) 
                         {
