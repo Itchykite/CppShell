@@ -208,17 +208,8 @@ int main()
 
                         if (!in_single_quotes && !in_double_quotes && c == '\\' && i + 1 < line.size()) 
                         {
-                            if (line[i + 1] == ' ') 
-                            {
-                                arg += ' ';
-                                ++i;
-                            } 
-                            else 
-                            {
-                                arg += '\\';
-                                arg += line[i + 1];
-                                ++i;
-                            }
+                            arg += line[i + 1];
+                            ++i;
                             continue;
                         }
 
