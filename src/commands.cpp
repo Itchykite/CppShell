@@ -1,4 +1,5 @@
 #include "commands.h"
+#include <iterator>
 #include <readline/history.h>
 
 int execute_command(std::string& input) 
@@ -256,6 +257,7 @@ void history_command(std::string input)
     if (input.size() > pos && input[pos] == ' ') 
     {
         std::string arg = input.substr(pos + 1);
+        trim(arg);
         if (is_number(arg))
         {
             int n = std::stoi(arg);
@@ -274,7 +276,34 @@ void history_command(std::string input)
             {
                  std::cout << std::setw(5) << i + 1 << "  " << _history_list[i]->line << std::endl;
             }
-        } 
+        }
+        else if(arg == "-c")
+        {
+            clear_history();
+            return;
+        }
+        else if(arg.substr(0, 2) == "-r")
+        {
+            size_t arg = prefix[5].size() + 3;
+            if (input.size() > arg && input[arg] == ' ')
+            {
+                std::string file_path = input.substr(arg + 1);
+                trim(file_path);
+                if (file_path.empty())
+                {
+                    std::cerr << "history: missing file path" << std::endl;
+                    return;
+                }
+                else 
+                {
+                    if (read_history(file_path.c_str()) != 0) 
+                    {
+                        std::cerr << "history: could not read history from " << file_path << std::endl;
+                        return;
+                    }
+                }
+            }
+        }
         else 
         {
             std::cerr << "Invalid argument for history command" << std::endl;
@@ -293,7 +322,7 @@ void history_command(std::string input)
         {
             for (int i = 0; _history_list[i]; ++i) 
             {
-                std::cout << i + 1 << " " << _history_list[i]->line << std::endl;
+                std::cout << std::setw(5) << i + 1 << "  " << _history_list[i]->line << std::endl;
             }
         }
     }
