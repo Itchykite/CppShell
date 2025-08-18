@@ -20,8 +20,6 @@
 #include <set>
 #include <dirent.h>
 
-extern "C" char *rl_command_generator(const char *text, int state);
-
 std::array<std::string, 5> prefix = {"echo", "type", "exit", "pwd", "cd"};
 
 enum class Commands
