@@ -3,6 +3,7 @@
 int saved_fd = -1;
 int fd = -1;
 int target_fd = STDOUT_FILENO;
+const char* histfile = std::getenv("HISTFILE") ? std::getenv("HISTFILE") : ".history";
 
 // Komendy
 Commands command(const std::string& input)

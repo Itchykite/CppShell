@@ -25,6 +25,7 @@
 extern int saved_fd;
 extern int fd;
 extern int target_fd;
+extern const char* histfile;
 
 const std::array<std::string, 6> prefix = {"echo", "type", "exit", "pwd", "cd", "history"};
 

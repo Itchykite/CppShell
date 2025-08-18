@@ -18,6 +18,8 @@ int execute_command(std::string& input)
         case Commands::EXIT:
         {
             exit(exit_command(input));
+            write_history(histfile);
+
             break;
         }
 

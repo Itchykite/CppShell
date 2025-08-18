@@ -9,6 +9,9 @@ int main()
     rl_attempted_completion_function = my_completion;
     using_history();
 
+    const char* histfile = std::getenv("HISTFILE") ? std::getenv("HISTFILE") : ".history";
+    read_history(histfile); 
+
     std::string input;
 
     for(;;)
