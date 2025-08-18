@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <algorithm>
 #include <cctype>
+#include <fstream>
 
 extern int saved_fd;
 extern int fd;

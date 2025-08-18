@@ -1,5 +1,4 @@
 #include "commands.h"
-#include <iterator>
 #include <readline/history.h>
 
 int execute_command(std::string& input) 
@@ -326,7 +325,46 @@ void history_command(std::string input)
                 }
             }
         }
-        else 
+        else if(arg.substr(0, 2) == "-a")
+        {
+            size_t arg = prefix[5].size() + 3;
+            if (input.size() > arg && input[arg] == ' ')
+            {
+                std::string file_path = input.substr(arg + 1);
+                trim(file_path);
+                if (file_path.empty())
+                {
+                    std::cerr << "history: missing file path" << std::endl;
+                    return;
+                }
+                else
+                {
+                    static int last_appended_history_line = 0;
+                    HIST_ENTRY** _history_list = history_list();
+                    if (!_history_list)
+                    {
+                        std::cerr << "No history available" << std::endl;
+                        return;
+                    }
+
+                    std::ofstream file(file_path, std::ios::app);
+                    if (!file)
+                    {
+                        std::cerr << "history: could not write history to " << file_path << std::endl;
+                        return;
+                    }
+
+                    int total = 0;
+                    while (_history_list[total]) ++total;
+                    for (int i = last_appended_history_line; i < total; ++i)
+                    {
+                        file << _history_list[i]->line << std::endl;
+                    }
+
+                    last_appended_history_line = total;
+                }
+            }
+        }        else 
         {
             std::cerr << "Invalid argument for history command" << std::endl;
             return;
