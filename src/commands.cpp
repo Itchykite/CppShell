@@ -1,4 +1,5 @@
 #include "commands.h"
+#include <readline/history.h>
 
 int execute_command(std::string& input) 
 {
@@ -46,7 +47,7 @@ int execute_command(std::string& input)
 
         case Commands::HISTORY:
         {
-            history_command();
+            history_command(input);
             break;
         }
 
@@ -243,19 +244,52 @@ void cd_command(std::string input)
     }
 }
 
-void history_command()
+void history_command(std::string input)
 {
-    HIST_ENTRY** _history_list = history_list();
-    if (!_history_list)
+    if(where_history() < 0) 
     {
         std::cerr << "No history available" << std::endl;
         return;
     }
-    else 
+
+    size_t pos = prefix[5].size();
+    if (input.size() > pos && input[pos] == ' ') 
     {
-        for (int i = 0; _history_list[i]; ++i) 
+        std::string arg = input.substr(pos + 1);
+        if (is_number(arg))
         {
-            std::cout << i + 1 << " " << _history_list[i]->line << std::endl;
+            int n = std::stoi(arg);
+            HIST_ENTRY** _history_list = history_list();
+            
+            for(int i = std::max(0, where_history() - n); i < where_history(); ++i) 
+            {
+                if (_history_list[i]) 
+                {
+                    std::cout << i + 1 << " " << _history_list[i]->line << std::endl;
+                }
+            }
+            return;
+        } 
+        else 
+        {
+            std::cerr << "Invalid argument for history command" << std::endl;
+            return;
+        }
+    }
+    else
+    {
+        HIST_ENTRY** _history_list = history_list();
+        if (!_history_list)
+        {
+            std::cerr << "No history available" << std::endl;
+            return;
+        }
+        else 
+        {
+            for (int i = 0; _history_list[i]; ++i) 
+            {
+                std::cout << i + 1 << " " << _history_list[i]->line << std::endl;
+            }
         }
     }
 }

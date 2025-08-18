@@ -131,3 +131,8 @@ bool create_directory(const std::string& path)
     free(path_cpy);
     return true;
 }
+
+bool is_number(const std::string& str)
+{
+    return !str.empty() && std::all_of(str.begin(), str.end(), ::isdigit);
+}

@@ -19,6 +19,7 @@
 #include <readline/history.h>
 #include <stdio.h>
 #include <algorithm>
+#include <cctype>
 
 extern int saved_fd;
 extern int fd;
@@ -43,6 +44,7 @@ std::vector<std::string> parse_args(const std::string& line);
 std::vector<std::string> split(const std::string& str, char delimiter);
 std::string find_command_in_path(const std::string& com);
 bool create_directory(const std::string& path);
+bool is_number(const std::string& str);
 
 inline auto trim = [](std::string& str) 
 {

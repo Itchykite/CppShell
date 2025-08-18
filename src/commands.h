@@ -9,5 +9,5 @@ void echo_command(std::string input);
 void type_command(std::string input);
 void pwd_command();
 void cd_command(std::string input);
-void history_command();
+void history_command(std::string input);
 void external_command(std::string input);
