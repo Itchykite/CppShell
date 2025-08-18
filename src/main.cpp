@@ -220,7 +220,7 @@ int main()
                 continue;
             }
 
-            int fd = open(file_part.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            fd = open(file_part.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
             if (fd < 0) 
             {
                 std::cerr << "Error opening file for redirection: " << file_part << std::endl;
