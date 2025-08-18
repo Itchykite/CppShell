@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <limits.h>
 #include <filesystem>
+#include <fstream>
 #include <fcntl.h>
 #include <libgen.h>
 #include <cstring>
@@ -164,25 +165,50 @@ int main()
 
         size_t redir_pos;
         std::string redir_op;
+        bool append = false;
 
         size_t redir_pos_std = input.find(">");
         size_t redir_pos_1 = input.find("1>");
         size_t redir_pos_2 = input.find("2>");
+        size_t redir_pos_std_append = input.find(">>");
+        size_t redir_pos_1_append = input.find("1>>");
+        size_t redir_pos_2_append = input.find("2>>");
 
-        if (redir_pos_2 != std::string::npos) 
+        if (redir_pos_2_append != std::string::npos) 
+        {
+            redir_pos = redir_pos_2_append;
+            redir_op = "2>>";
+            append = true;
+        } 
+        else if (redir_pos_1_append != std::string::npos) 
+        {
+            redir_pos = redir_pos_1_append;
+            redir_op = "1>>";
+            append = true;
+        } 
+        else if (redir_pos_std_append != std::string::npos) 
+        {
+            redir_pos = redir_pos_std_append;
+            redir_op = ">>";
+            append = true;
+        }
+        else if (redir_pos_2 != std::string::npos) 
         {
             redir_pos = input.find("2>");
             redir_op = "2>";
+            append = false;
         }
         else if (redir_pos_1 != std::string::npos) 
         {
             redir_pos = redir_pos_1;
             redir_op = "1>";
+            append = false;
         } 
         else if (redir_pos_std != std::string::npos) 
         {
             redir_pos = redir_pos_std;
             redir_op = ">";
+            append = false;
         } 
         else 
         {
@@ -227,14 +253,16 @@ int main()
                 continue;
             }
 
-            fd = open(file_part.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            int open_file_flags = O_WRONLY | O_CREAT | (append ? O_APPEND : O_TRUNC);
+
+            fd = open(file_part.c_str(), open_file_flags, 0644);
             if (fd < 0) 
             {
                 std::cerr << "Error opening file for redirection: " << file_part << std::endl;
                 continue;
             }
             
-            if (redir_op == "2>") 
+            if (redir_op[0] == '2') 
             {
                 target_fd = STDERR_FILENO;
             } 
