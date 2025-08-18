@@ -24,7 +24,7 @@ extern int saved_fd;
 extern int fd;
 extern int target_fd;
 
-const std::array<std::string, 5> prefix = {"echo", "type", "exit", "pwd", "cd"};
+const std::array<std::string, 6> prefix = {"echo", "type", "exit", "pwd", "cd", "history"};
 
 enum class Commands
 {
@@ -33,6 +33,7 @@ enum class Commands
     TYPE,
     PWD,
     CD,
+    HISTORY,
     EXTERNAL
 };
 

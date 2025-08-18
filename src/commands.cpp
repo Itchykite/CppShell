@@ -44,6 +44,12 @@ int execute_command(std::string& input)
             break;
         }
 
+        case Commands::HISTORY:
+        {
+            history_command();
+            break;
+        }
+
         case Commands::EXTERNAL:
         {
             external_command(input);
@@ -234,6 +240,23 @@ void cd_command(std::string input)
     else
     {
         std::cerr << "cd: missing argument" << std::endl;
+    }
+}
+
+void history_command()
+{
+    HIST_ENTRY** _history_list = history_list();
+    if (!_history_list)
+    {
+        std::cerr << "No history available" << std::endl;
+        return;
+    }
+    else 
+    {
+        for (int i = 0; _history_list[i]; ++i) 
+        {
+            std::cout << i + 1 << " " << _history_list[i]->line << std::endl;
+        }
     }
 }
 

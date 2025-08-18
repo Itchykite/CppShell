@@ -12,6 +12,7 @@ Commands command(const std::string& input)
     else if (input.substr(0, prefix[1].size()) == prefix[1]) return Commands::TYPE;
     else if (input.substr(0, prefix[3].size()) == prefix[3]) return Commands::PWD;
     else if (input.substr(0, prefix[4].size()) == prefix[4]) return Commands::CD;
+    else if (input.substr(0, prefix[5].size()) == prefix[5]) return Commands::HISTORY;
     else return Commands::EXTERNAL;
 }
 

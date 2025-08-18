@@ -13,11 +13,13 @@ void pipeline(const std::string& input)
     std::vector<int[2]> pipes(n - 1);
 
     for (int i = 0; i < n - 1; ++i)
+    {
         if (pipe(pipes[i]) < 0) 
         {
             std::cerr << "Pipe failed" << std::endl;
             return;
         }
+    }
 
     for (int i = 0; i < n; ++i) 
     {
