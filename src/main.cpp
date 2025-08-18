@@ -230,13 +230,6 @@ int main()
             int saved_stdout = dup(STDOUT_FILENO);
             dup2(fd, STDOUT_FILENO);
             close(fd);
-
-            if (command(input) != Commands::EXTERNAL) 
-            {
-                fflush(stdout);
-                dup2(saved_stdout, STDOUT_FILENO);
-                close(saved_stdout);
-            }
         }
 
         switch(command(input))
