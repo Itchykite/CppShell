@@ -162,17 +162,35 @@ int main()
     {
         std::getline(std::cin, input);
 
-        size_t redir_pos = std::min(input.find('>'), input.find("1>"));
+        size_t redir_pos;
+        std::string redir_op;
+
+        size_t redir_pos_std = input.find(">");
+        size_t redir_pos_1 = input.find("1>");
+
+        if (redir_pos_1 != std::string::npos) 
+        {
+            redir_pos = redir_pos_1;
+            redir_op = "1>";
+        } 
+        else if (redir_pos_std != std::string::npos) 
+        {
+            redir_pos = redir_pos_std;
+            redir_op = ">";
+        } 
+        else 
+        {
+            redir_pos = std::string::npos;
+        }
+
         int saved_stdout = dup(STDOUT_FILENO);  
         int fd = -1;
 
         if (redir_pos != std::string::npos)
         {
             std::string command_part = input.substr(0, redir_pos);
-            std::string file_part;
-            if (redir_pos + 1 < input.size())
-                file_part = input.substr(redir_pos + 1);
-                
+            std::string file_part = input.substr(redir_pos + redir_op.size());
+
             auto trim = [](std::string& str) 
             {
                 str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](unsigned char ch) 
@@ -202,19 +220,22 @@ int main()
                 continue;
             }
 
-            fd = open(file_part.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            int fd = open(file_part.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
             if (fd < 0) 
             {
                 std::cerr << "Error opening file for redirection: " << file_part << std::endl;
                 continue;
             }
 
-            if (fd != -1 && command(input) != Commands::EXTERNAL) 
+            int saved_stdout = dup(STDOUT_FILENO);
+            dup2(fd, STDOUT_FILENO);
+            close(fd);
+
+            if (command(input) != Commands::EXTERNAL) 
             {
                 fflush(stdout);
                 dup2(saved_stdout, STDOUT_FILENO);
                 close(saved_stdout);
-                close(fd);
             }
         }
 
