@@ -2,10 +2,6 @@
 
 int execute_command(std::string& input) 
 {
-    int saved_fd = -1;
-    int fd = -1;
-    int target_fd = STDOUT_FILENO;
-
     if (input.find('>') != std::string::npos || input.find('|') != std::string::npos) 
     {
         saved_fd = dup(target_fd);
@@ -60,6 +56,7 @@ int execute_command(std::string& input)
         fflush((target_fd == STDOUT_FILENO) ? stdout : stderr);
         dup2(saved_fd, target_fd);
         close(saved_fd);
+        saved_fd = -1;
     }
 
     return 0;
@@ -275,7 +272,6 @@ void external_command(std::string input)
         if (fd != -1) 
         {
             dup2(saved_fd, target_fd);
-            close(saved_fd);
         }
     }
     else
