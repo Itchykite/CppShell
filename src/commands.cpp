@@ -265,7 +265,7 @@ void history_command(std::string input)
             {
                 if (_history_list[i]) 
                 {
-                    std::cout << i + 1 << " " << _history_list[i]->line << std::endl;
+                    std::cout << "\t" << i + 1 << " " << _history_list[i]->line << std::endl;
                 }
             }
             return;
