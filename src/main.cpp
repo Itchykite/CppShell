@@ -127,14 +127,17 @@ int main()
     {
         std::getline(std::cin, input);
 
-        size_t redir_pos = input.find('>');
+        size_t redir_pos = std::min(input.find('>'), input.find("1>"));
         int saved_stdout = dup(STDOUT_FILENO);  
         int fd = -1;
+
         if (redir_pos != std::string::npos)
         {
             std::string command_part = input.substr(0, redir_pos);
-            std::string file_part = input.substr(redir_pos + 1);
-            
+            std::string file_part;
+            if (redir_pos + 1 < input.size())
+                file_part = input.substr(redir_pos + 1);
+                
             auto trim = [](std::string& str) 
             {
                 str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](unsigned char ch) 
@@ -159,11 +162,14 @@ int main()
                 continue;
             }
 
-            if (command(input) != Commands::EXTERNAL) 
+            if (fd != -1 && command(input) != Commands::EXTERNAL) 
             {
-                saved_stdout = dup(STDOUT_FILENO);
-                dup2(fd, STDOUT_FILENO);
-            }}
+                fflush(stdout);
+                dup2(saved_stdout, STDOUT_FILENO);
+                close(saved_stdout);
+                close(fd);
+            }
+        }
 
         switch(command(input))
         {
