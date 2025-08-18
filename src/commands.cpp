@@ -260,15 +260,20 @@ void history_command(std::string input)
         {
             int n = std::stoi(arg);
             HIST_ENTRY** _history_list = history_list();
-            
-            for(int i = std::max(0, where_history() - n); i < where_history(); ++i) 
+            if (!_history_list) 
             {
-                if (_history_list[i]) 
-                {
-                    std::cout << "   " << i + 1 << " " << _history_list[i]->line << std::endl;
-                }
+                std::cerr << "No history available" << std::endl;
+                return;
             }
-            return;
+
+            int total = 0;
+            while(_history_list[total]) ++total;
+
+            int start = std::max(0, total - n);
+            for (int i = start; i < total; ++i)
+            {
+                 std::cout << std::setw(5) << i + 1 << "  " << _history_list[i]->line << std::endl;
+            }
         } 
         else 
         {
