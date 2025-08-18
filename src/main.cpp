@@ -167,8 +167,14 @@ int main()
 
         size_t redir_pos_std = input.find(">");
         size_t redir_pos_1 = input.find("1>");
+        size_t redir_pos_2 = input.find("2>");
 
-        if (redir_pos_1 != std::string::npos) 
+        if (redir_pos_2 != std::string::npos) 
+        {
+            redir_pos = input.find("2>");
+            redir_op = "2>";
+        }
+        else if (redir_pos_1 != std::string::npos) 
         {
             redir_pos = redir_pos_1;
             redir_op = "1>";
@@ -183,8 +189,9 @@ int main()
             redir_pos = std::string::npos;
         }
 
-        int saved_stdout = dup(STDOUT_FILENO);  
+        int saved_fd = -1;
         int fd = -1;
+        int target_fd = STDOUT_FILENO;
 
         if (redir_pos != std::string::npos)
         {
@@ -226,9 +233,18 @@ int main()
                 std::cerr << "Error opening file for redirection: " << file_part << std::endl;
                 continue;
             }
+            
+            if (redir_op == "2>") 
+            {
+                target_fd = STDERR_FILENO;
+            } 
+            else 
+            {
+                target_fd = STDOUT_FILENO;
+            }
 
-            int saved_stdout = dup(STDOUT_FILENO);
-            dup2(fd, STDOUT_FILENO);
+            saved_fd = dup(target_fd);
+            dup2(fd, target_fd);
             close(fd);
         }
 
@@ -430,7 +446,7 @@ int main()
                 {
                     if (fd != -1) 
                     {
-                        dup2(fd, STDOUT_FILENO);
+                        dup2(fd, target_fd);
                         close(fd);
                     }
 
@@ -445,8 +461,8 @@ int main()
 
                     if (fd != -1) 
                     {
-                        dup2(saved_stdout, STDOUT_FILENO);
-                        close(saved_stdout);
+                        dup2(saved_fd, target_fd);
+                        close(saved_fd);
                     }
                 }
                 else
@@ -457,14 +473,11 @@ int main()
             }
         }
 
-        if (fd != -1 && saved_stdout != -1) 
+        if (saved_fd != -1) 
         {
-            fflush(stdout);
-            dup2(saved_stdout, STDOUT_FILENO);
-            close(saved_stdout);
-            close(fd);
-            saved_stdout = -1;
-            fd = -1;
+            fflush((target_fd == STDOUT_FILENO) ? stdout : stderr);
+            dup2(saved_fd, target_fd);
+            close(saved_fd);
         }
 
         std::cout << "$ " << std::unitbuf;
