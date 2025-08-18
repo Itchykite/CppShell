@@ -11,6 +11,8 @@
 #include <limits.h>
 #include <filesystem>
 #include <fcntl.h>
+#include <libgen.h>
+#include <cstring>
 
 std::array<std::string, 5> prefix = {"echo", "type", "exit", "pwd", "cd"};
 
@@ -117,6 +119,39 @@ std::string find_command_in_path(const std::string& com)
     return "";
 }
 
+bool create_directory(const std::string& path)
+{
+    std::string file_path = path;
+    char* path_cpy = strdup(path.c_str());
+    char* dir = dirname(path_cpy);
+
+    if (!dir)
+    {
+        free(path_cpy);
+        return false; 
+    }
+
+    std::string current;
+    std::string filepath;
+    std::istringstream iss(dir);
+
+    while (std::getline(iss, current, '/')) 
+    {
+        if (current.empty()) continue; 
+
+        filepath += "/" + current;
+
+        if (mkdir(filepath.c_str(), 0755) == -1 && errno != EEXIST) 
+        {
+            free(path_cpy);
+            return false; 
+        }
+    }
+    
+    free(path_cpy);
+    return true;
+}
+
 int main() 
 {
     std::string input;
@@ -154,6 +189,18 @@ int main()
             trim(file_part);
 
             input = command_part;
+
+            if (file_part.empty()) 
+            {
+                std::cerr << "Error: No file specified for redirection." << std::endl;
+                continue;
+            }
+
+            if (!create_directory(file_part)) 
+            {
+                std::cerr << "Error creating directory for redirection: " << file_part << std::endl;
+                continue;
+            }
 
             fd = open(file_part.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
             if (fd < 0) 
