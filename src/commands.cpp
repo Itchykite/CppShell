@@ -18,7 +18,6 @@ int execute_command(std::string& input)
         case Commands::EXIT:
         {
             exit(exit_command(input));
-            write_history(histfile);
 
             break;
         }
@@ -79,16 +78,19 @@ int exit_command(std::string input)
         std::string exit_code = input.substr(pos + 1);
         if (exit_code.empty()) 
         {
+            write_history(histfile);
             return 0;
         } 
         else 
         {
             int code = std::stoi(exit_code);
+            write_history(histfile);
             return code;
         }
     } 
     else 
     {
+        write_history(histfile);
         return 0;
     }
 }
