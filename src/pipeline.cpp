@@ -4,88 +4,74 @@
 
 void pipeline(const std::string& input)
 {
-    std::string pipeline_op = "|";
-    size_t pipe_pos = input.find(pipeline_op);
+    std::vector<std::string> commands = split(input, '|');
+    for (auto& cmd : commands) trim(cmd);
 
-    if (pipe_pos != std::string::npos) 
-    {
-        std::string first_command = input.substr(0, pipe_pos);
-        std::string second_command = input.substr(pipe_pos + pipeline_op.size());
-        trim(first_command);
-        trim(second_command);
+    int n = commands.size();
+    if (n < 2) return;
 
-        int pipe_fds[2];
-        if (pipe(pipe_fds) < 0) 
+    std::vector<int[2]> pipes(n - 1);
+
+    for (int i = 0; i < n - 1; ++i)
+        if (pipe(pipes[i]) < 0) 
         {
             std::cerr << "Pipe failed" << std::endl;
+            return;
         }
 
-        pid_t pid1 = fork();
-        if (pid1 == 0) 
+    for (int i = 0; i < n; ++i) 
+    {
+        pid_t pid = fork();
+        if (pid == 0) 
         {
-            dup2(pipe_fds[1], STDOUT_FILENO);
-            close(pipe_fds[0]);
-            close(pipe_fds[1]);
-
-            std::vector<std::string> args = parse_args(first_command);
-            std::vector<char*> argv;
-
-            for (auto& arg : args) 
-                argv.push_back(const_cast<char*>(arg.c_str()));
-            argv.push_back(nullptr); 
-
-            if (is_shell_command(args[0]))  
+            if (i > 0) 
             {
-                execute_command(first_command);  
+                dup2(pipes[i - 1][0], STDIN_FILENO);
+            }
+            if (i < n - 1) 
+            {
+                dup2(pipes[i][1], STDOUT_FILENO);
+            }
+            for (int j = 0; j < n - 1; ++j) 
+            {
+                close(pipes[j][0]);
+                close(pipes[j][1]);
+            }
+
+            std::vector<std::string> args = parse_args(commands[i]);
+            if (args.empty()) 
+            {
+                std::cerr << "No command provided" << std::endl;
+                exit(1);
+            }
+            if (is_shell_command(args[0])) 
+            {
+                std::string rebuild_command = commands[i];
+                execute_command(rebuild_command);
                 exit(0);
             }
-            else 
-            {
-                execvp(argv[0], argv.data());
-            }
+            std::vector<char*> argv;
+            for (auto& arg : args)
+                argv.push_back(const_cast<char*>(arg.c_str()));
+            argv.push_back(nullptr);
 
+            execvp(argv[0], argv.data());
             std::cerr << argv[0] << ": command not found" << std::endl;
             exit(1);
         } 
-        else if (pid1 < 0) 
+        else if (pid < 0) 
         {
             std::cerr << "Fork failed" << std::endl;
+            return;
         }
-
-        pid_t pid2 = fork();
-        if (pid2 == 0) 
-        {
-            dup2(pipe_fds[0], STDIN_FILENO);
-            close(pipe_fds[0]);
-            close(pipe_fds[1]);
-
-            std::vector<std::string> args = parse_args(second_command);
-            std::vector<char*> argv;
-            for (auto& arg : args) 
-                argv.push_back(const_cast<char*>(arg.c_str()));
-            argv.push_back(nullptr); 
-
-            if (is_shell_command(args[0]))  
-            {
-                execute_command(second_command);
-                exit(0);
-            }
-            else 
-            {
-                execvp(argv[0], argv.data());
-            }
-
-            std::cerr << argv[0] << ": command not found" << std::endl;
-            exit(1);
-        } 
-        else if (pid2 < 0) 
-        {
-            std::cerr << "Fork failed" << std::endl;
-        }
-
-        close(pipe_fds[0]);
-        close(pipe_fds[1]);
-        waitpid(pid1, nullptr, 0);
-        waitpid(pid2, nullptr, 0);
+    }
+    for (int j = 0; j < n - 1; ++j) 
+    {
+        close(pipes[j][0]);
+        close(pipes[j][1]);
+    }
+    for (int i = 0; i < n; ++i) 
+    {
+        wait(nullptr);
     }
 }
