@@ -161,6 +161,20 @@ bool create_directory(const std::string& path)
     return true;
 }
 
+// Funkcja do usuwania białych znaków z początku i końca stringa
+auto trim = [](std::string& str) 
+{
+    str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](unsigned char ch) 
+    {
+        return !std::isspace(ch);
+    }));
+    str.erase(std::find_if(str.rbegin(), str.rend(), [](unsigned char ch) 
+    {
+        return !std::isspace(ch);
+    }).base(), str.end());
+};
+
+// Funkcja do pobierania komend z PATH
 std::set<std::string>& get_path_commands()
 {
     static std::set<std::string> commands;
@@ -203,6 +217,7 @@ std::set<std::string>& get_path_commands()
     return commands;
 }
 
+// Funkcja do uzupełniania komend w linii poleceń
 char* command_completion_function(const char* text, int state)
 {
     static std::vector<std::string> all_cmds;
@@ -226,6 +241,7 @@ char* command_completion_function(const char* text, int state)
     return nullptr;
 }
 
+// Funkcja do uzupełniania nazw plików i katalogów
 char** my_completion(const char* text, int start, int end)
 {
     if (start == 0)
@@ -252,6 +268,80 @@ int main()
         if (!input.empty())
         {
             add_history(input.c_str()); 
+        }
+
+        std::string pipeline_op = "|";
+        size_t pipe_pos = input.find(pipeline_op);
+
+        if (pipe_pos != std::string::npos) 
+        {
+            std::string first_command = input.substr(0, pipe_pos);
+            std::string second_command = input.substr(pipe_pos + pipeline_op.size());
+            trim(first_command);
+            trim(second_command);
+
+            int pipe_fds[2];
+            if (pipe(pipe_fds) < 0) 
+            {
+                std::cerr << "Pipe failed" << std::endl;
+                continue;
+            }
+
+            pid_t pid1 = fork();
+            if (pid1 == 0) 
+            {
+                dup2(pipe_fds[1], STDOUT_FILENO);
+                close(pipe_fds[0]);
+                close(pipe_fds[1]);
+
+                std::vector<std::string> args = parse_args(first_command);
+                std::vector<char*> argv;
+
+                for(auto& arg : args)
+                    argv.push_back(const_cast<char*>(arg.c_str()));
+                argv.push_back(nullptr);
+
+                execvp(argv[0], argv.data());
+
+                std::cerr << argv[0] << ": command not found" << std::endl;
+                exit(1);
+            } 
+            else if (pid1 < 0) 
+            {
+                std::cerr << "Fork failed" << std::endl;
+                continue;
+            }
+
+            pid_t pid2 = fork();
+            if (pid2 == 0) 
+            {
+                dup2(pipe_fds[0], STDIN_FILENO);
+                close(pipe_fds[0]);
+                close(pipe_fds[1]);
+
+                std::vector<std::string> args = parse_args(second_command);
+                std::vector<char*> argv;
+
+                for(auto& arg : args)
+                    argv.push_back(const_cast<char*>(arg.c_str()));
+                argv.push_back(nullptr);
+
+                execvp(argv[0], argv.data());
+
+                std::cerr << argv[0] << ": command not found" << std::endl;
+                exit(1);
+            } 
+            else if (pid2 < 0) 
+            {
+                std::cerr << "Fork failed" << std::endl;
+                continue;
+            }
+
+            close(pipe_fds[0]);
+            close(pipe_fds[1]);
+            waitpid(pid1, nullptr, 0);
+            waitpid(pid2, nullptr, 0);
+            continue;
         }
 
         size_t redir_pos;
@@ -315,18 +405,6 @@ int main()
             std::string command_part = input.substr(0, redir_pos);
             std::string file_part = input.substr(redir_pos + redir_op.size());
 
-            auto trim = [](std::string& str) 
-            {
-                str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](unsigned char ch) 
-                {
-                    return !std::isspace(ch);
-                }));
-                str.erase(std::find_if(str.rbegin(), str.rend(), [](unsigned char ch) 
-                {
-                    return !std::isspace(ch);
-                }).base(), str.end());
-            };
-
             trim(command_part);
             trim(file_part);
 
@@ -366,7 +444,7 @@ int main()
             dup2(fd, target_fd);
             close(fd);
         }
-
+        
         switch(command(input))
         {
             case Commands::EXIT:
@@ -556,8 +634,8 @@ int main()
                 if(args.empty()) break;
 
                 std::vector<char*> argv;
-                for(auto& arg : args)
-                    argv.push_back(&arg[0]);
+                for (auto& arg : args)
+                    argv.push_back(const_cast<char*>(arg.c_str()));
                 argv.push_back(nullptr);
 
                 pid_t pid = fork();
