@@ -70,6 +70,25 @@ int execute_command(std::string& input)
     return 0;
 }
 
+void append_history_exit() 
+{
+    HIST_ENTRY* last_entry = history_get(history_length);
+    if (last_entry) 
+    {
+        std::string last_command = last_entry->line;
+        if (last_command.find(prefix[2]) == 0) 
+        {
+            std::string exit_code = last_command.substr(prefix[2].size());
+            if (!exit_code.empty()) 
+            {
+                int code = std::stoi(exit_code);
+                write_history(histfile);
+                exit(code);
+            }
+        }
+    }
+}
+
 int exit_command(std::string input) 
 {
     size_t pos = prefix[2].size();
@@ -78,19 +97,19 @@ int exit_command(std::string input)
         std::string exit_code = input.substr(pos + 1);
         if (exit_code.empty()) 
         {
-            write_history(histfile);
+            append_history_exit();
             return 0;
         } 
         else 
         {
             int code = std::stoi(exit_code);
-            write_history(histfile);
+            append_history_exit();
             return code;
         }
     } 
     else 
     {
-        write_history(histfile);
+        append_history_exit();
         return 0;
     }
 }
