@@ -3,12 +3,14 @@
 #include <array>
 #include <vector>
 #include <sstream> 
+#include <algorithm>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <limits.h>
 #include <filesystem>
+#include <fcntl.h>
 
 std::array<std::string, 5> prefix = {"echo", "type", "exit", "pwd", "cd"};
 
@@ -124,6 +126,44 @@ int main()
     for(;;)
     {
         std::getline(std::cin, input);
+
+        size_t redir_pos = input.find('>');
+        int saved_stdout = dup(STDOUT_FILENO);  
+        int fd = -1;
+        if (redir_pos != std::string::npos)
+        {
+            std::string command_part = input.substr(0, redir_pos);
+            std::string file_part = input.substr(redir_pos + 1);
+            
+            auto trim = [](std::string& str) 
+            {
+                str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](unsigned char ch) 
+                {
+                    return !std::isspace(ch);
+                }));
+                str.erase(std::find_if(str.rbegin(), str.rend(), [](unsigned char ch) 
+                {
+                    return !std::isspace(ch);
+                }).base(), str.end());
+            };
+
+            trim(command_part);
+            trim(file_part);
+
+            input = command_part;
+
+            fd = open(file_part.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            if (fd < 0) 
+            {
+                std::cerr << "Error opening file for redirection: " << file_part << std::endl;
+                continue;
+            }
+
+            if (command(input) != Commands::EXTERNAL) 
+            {
+                saved_stdout = dup(STDOUT_FILENO);
+                dup2(fd, STDOUT_FILENO);
+            }}
 
         switch(command(input))
         {
@@ -321,6 +361,12 @@ int main()
                 pid_t pid = fork();
                 if(pid == 0)
                 {
+                    if (fd != -1) 
+                    {
+                        dup2(fd, STDOUT_FILENO);
+                        close(fd);
+                    }
+
                     execvp(argv[0], argv.data());
                     std::cerr << argv[0] << ": command not found" << std::endl;
                     exit(1);
@@ -329,6 +375,12 @@ int main()
                 {
                     int status;
                     waitpid(pid, &status, 0);
+
+                    if (fd != -1) 
+                    {
+                        dup2(saved_stdout, STDOUT_FILENO);
+                        close(saved_stdout);
+                    }
                 }
                 else
                 {
@@ -336,6 +388,16 @@ int main()
                 }
                 break;
             }
+        }
+
+        if (fd != -1 && saved_stdout != -1) 
+        {
+            fflush(stdout);
+            dup2(saved_stdout, STDOUT_FILENO);
+            close(saved_stdout);
+            close(fd);
+            saved_stdout = -1;
+            fd = -1;
         }
 
         std::cout << "$ " << std::unitbuf;

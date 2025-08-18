@@ -1,0 +1,10 @@
+total 32
+drwxr-xr-x 3 kacper kacper 4096 Aug 18 08:56 build
+-rw-r--r-- 1 kacper kacper  260 Aug 18 07:43 CMakeLists.txt
+-rw-r--r-- 1 kacper kacper  281 Aug 18 07:43 codecrafters.yml
+-rw-r--r-- 1 kacper kacper 1358 Aug 18 07:43 README.md
+drwxr-xr-x 2 kacper kacper 4096 Aug 18 08:56 src
+-rw-r--r-- 1 kacper kacper    0 Aug 18 08:56 text.txt
+-rw-r--r-- 1 kacper kacper  373 Aug 18 07:43 vcpkg-configuration.json
+-rw-r--r-- 1 kacper kacper   26 Aug 18 07:43 vcpkg.json
+-rwxr-xr-x 1 kacper kacper  814 Aug 18 07:43 your_program.sh
