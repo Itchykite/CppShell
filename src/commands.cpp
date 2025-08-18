@@ -304,6 +304,28 @@ void history_command(std::string input)
                 }
             }
         }
+        else if(arg.substr(0, 2) == "-w")
+        {
+            size_t arg = prefix[5].size() + 3;
+            if (input.size() > arg && input[arg] == ' ')
+            {
+                std::string file_path = input.substr(arg + 1);
+                trim(file_path);
+                if (file_path.empty())
+                {
+                    std::cerr << "history: missing file path" << std::endl;
+                    return;
+                }
+                else 
+                {
+                    if (write_history(file_path.c_str()) != 0) 
+                    {
+                        std::cerr << "history: could not write history to " << file_path << std::endl;
+                        return;
+                    }
+                }
+            }
+        }
         else 
         {
             std::cerr << "Invalid argument for history command" << std::endl;
