@@ -27,7 +27,7 @@ extern int fd;
 extern int target_fd;
 extern const char* histfile;
 
-const std::array<std::string, 6> prefix = {"echo", "type", "exit", "pwd", "cd", "history"};
+const std::array<std::string, 7> prefix = {"echo", "type", "exit", "pwd", "cd", "history", "help"};
 
 enum class Commands
 {
@@ -37,6 +37,7 @@ enum class Commands
     PWD,
     CD,
     HISTORY,
+    HELP,
     EXTERNAL
 };
 
@@ -48,7 +49,7 @@ std::string find_command_in_path(const std::string& com);
 bool create_directory(const std::string& path);
 bool is_number(const std::string& str);
 
-inline auto trim = [](std::string& str) 
+inline auto trim = [](std::string& str) // Trim leading and trailing whitespace 
 {
     str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](unsigned char ch) 
     {

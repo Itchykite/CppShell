@@ -1,5 +1,6 @@
 #include "commands.h"
 #include <readline/history.h>
+#include <iomanip>
 
 int execute_command(std::string& input) 
 {
@@ -18,7 +19,6 @@ int execute_command(std::string& input)
         case Commands::EXIT:
         {
             exit(exit_command(input));
-
             break;
         }
 
@@ -52,6 +52,12 @@ int execute_command(std::string& input)
             break;
         }
 
+        case Commands::HELP:
+        {
+            help_command(input);
+            break;
+        }
+
         case Commands::EXTERNAL:
         {
             external_command(input);
@@ -72,11 +78,11 @@ int execute_command(std::string& input)
 
 void append_history_exit() 
 {
-    HIST_ENTRY* last_entry = history_get(history_length);
+    HIST_ENTRY* last_entry = history_get(history_length); // Get last history entry
     if (last_entry) 
     {
         std::string last_command = last_entry->line;
-        if (last_command.find(prefix[2]) == 0) 
+        if (last_command.find(prefix[2]) == 0) // Check if it starts with "exit" 
         {
             std::string exit_code = last_command.substr(prefix[2].size());
             if (!exit_code.empty()) 
@@ -95,12 +101,12 @@ int exit_command(std::string input)
     if (input.size() > pos && input[pos] == ' ') 
     {
         std::string exit_code = input.substr(pos + 1);
-        if (exit_code.empty()) 
+        if (exit_code.empty()) // No argument provided
         {
             append_history_exit();
             return 0;
         } 
-        else 
+        else // Argument provided 
         {
             int code = std::stoi(exit_code);
             append_history_exit();
@@ -246,17 +252,17 @@ void cd_command(std::string input)
         }
         else if(new_path == "~")
         {
-            const char* home = std::getenv("HOME");    
-            if(chdir(home) != 0)
+            const char* home = std::getenv("HOME"); // Get home directory    
+            if(chdir(home) != 0) // Change to home directory
             {
                 std::cerr << "cd: " << home << ": No such file or directory" << std::endl;
             }
         }
-        else if(chdir(new_path.c_str()) != 0)
+        else if(chdir(new_path.c_str()) != 0) // Change to specified directory
         {
             std::cerr << "cd: " << new_path << ": No such file or directory" << std::endl;
         }
-        else
+        else // Successfully changed directory
         {
             std::string current_path = std::filesystem::current_path().string();
         }
@@ -282,8 +288,8 @@ void history_command(std::string input)
         trim(arg);
         if (is_number(arg))
         {
-            int n = std::stoi(arg);
-            HIST_ENTRY** _history_list = history_list();
+            int n = std::stoi(arg); // Number of entries to display
+            HIST_ENTRY** _history_list = history_list(); // Get history list
             if (!_history_list) 
             {
                 std::cerr << "No history available" << std::endl;
@@ -291,10 +297,10 @@ void history_command(std::string input)
             }
 
             int total = 0;
-            while(_history_list[total]) ++total;
+            while(_history_list[total]) ++total; // Count total history entries
 
             int start = std::max(0, total - n);
-            for (int i = start; i < total; ++i)
+            for (int i = start; i < total; ++i) // Display last n entries
             {
                  std::cout << std::setw(5) << i + 1 << "  " << _history_list[i]->line << std::endl;
             }
@@ -318,7 +324,7 @@ void history_command(std::string input)
                 }
                 else 
                 {
-                    if (read_history(file_path.c_str()) != 0) 
+                    if (read_history(file_path.c_str()) != 0) // Read history from file 
                     {
                         std::cerr << "history: could not read history from " << file_path << std::endl;
                         return;
@@ -340,7 +346,7 @@ void history_command(std::string input)
                 }
                 else 
                 {
-                    if (write_history(file_path.c_str()) != 0) 
+                    if (write_history(file_path.c_str()) != 0) // Write history to file 
                     {
                         std::cerr << "history: could not write history to " << file_path << std::endl;
                         return;
@@ -362,8 +368,8 @@ void history_command(std::string input)
                 }
                 else
                 {
-                    static int last_appended_history_line = 0;
-                    HIST_ENTRY** _history_list = history_list();
+                    static int last_appended_history_line = 0; // Static variable to track last appended line
+                    HIST_ENTRY** _history_list = history_list(); // Get history list
                     if (!_history_list)
                     {
                         std::cerr << "No history available" << std::endl;
@@ -378,8 +384,8 @@ void history_command(std::string input)
                     }
 
                     int total = 0;
-                    while (_history_list[total]) ++total;
-                    for (int i = last_appended_history_line; i < total; ++i)
+                    while (_history_list[total]) ++total; // Count total history entries
+                    for (int i = last_appended_history_line; i < total; ++i) // Append new entries
                     {
                         file << _history_list[i]->line << std::endl;
                     }
@@ -387,7 +393,8 @@ void history_command(std::string input)
                     last_appended_history_line = total;
                 }
             }
-        }        else 
+        }        
+        else 
         {
             std::cerr << "Invalid argument for history command" << std::endl;
             return;
@@ -411,9 +418,40 @@ void history_command(std::string input)
     }
 }
 
+void help_command(std::string input) 
+{
+    size_t pos = prefix[6].size();
+    if (input.size() > pos && input[pos] == ' ') 
+    {
+        std::string external_flag = input.substr(pos + 1);
+        
+        if (external_flag == "external") 
+        {
+            system("help"); // Call system help for external commands
+        } 
+        else 
+        {
+            std::cerr << "Invalid argument for help command" << std::endl;
+        }
+    } 
+    else 
+    {
+        std::cout << "Built-in commands:" << std::endl;
+        std::cout << "  echo [arg ...]        : Display a line of text" << std::endl;
+        std::cout << "  type [command]        : Display information about command type" << std::endl;
+        std::cout << "  exit [n]             : Exit the shell with a status of n" << std::endl;
+        std::cout << "  pwd                   : Print the current working directory" << std::endl;
+        std::cout << "  cd [dir]              : Change the current directory to dir" << std::endl;
+        std::cout << "  history [n|-c|-r file|-w file|-a file] : Display or manipulate the command history" << std::endl;
+        std::cout << "  help                  : Display this help message" << std::endl;
+        std::cout << "External commands are executed if not a built-in command." << std::endl;
+        std::cout << "For external commands type help external" << std::endl;
+    }
+}
+
 void external_command(std::string input) 
 {
-    std::vector<std::string> args = parse_args(input); 
+    std::vector<std::string> args = parse_args(input); // Parse input into arguments 
     if(args.empty()) 
     {
         std::cerr << "No command provided" << std::endl;
@@ -421,12 +459,12 @@ void external_command(std::string input)
     }
 
     std::vector<char*> argv;
-    for (auto& arg : args)
+    for (auto& arg : args) // Convert to char* array for execvp
         argv.push_back(const_cast<char*>(arg.c_str()));
     argv.push_back(nullptr);
 
-    pid_t pid = fork();
-    if(pid == 0)
+    pid_t pid = fork(); // Fork a new process
+    if(pid == 0) // Child process
     {
         if (fd != -1) 
         {
@@ -434,11 +472,11 @@ void external_command(std::string input)
             close(fd);
         }
 
-        execvp(argv[0], argv.data());
+        execvp(argv[0], argv.data()); // Execute the command
         std::cerr << argv[0] << ": command not found" << std::endl;
         exit(1);
     }
-    else if(pid > 0)
+    else if(pid > 0) // Parent process
     {
         int status;
         waitpid(pid, &status, 0);

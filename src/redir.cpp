@@ -1,7 +1,7 @@
 #include "global.h"
 #include "redir.h"
 
-void redirect(std::string& input)
+void redirect(std::string& input) // Handle output redirection
 {
     size_t redir_pos;
     std::string redir_op;
@@ -75,7 +75,7 @@ void redirect(std::string& input)
             std::cerr << "Error creating directory for redirection: " << file_part << std::endl;
         }
 
-        int open_file_flags = O_WRONLY | O_CREAT | (append ? O_APPEND : O_TRUNC);
+        int open_file_flags = O_WRONLY | O_CREAT | (append ? O_APPEND : O_TRUNC); // Set flags for opening file
 
         fd = open(file_part.c_str(), open_file_flags, 0644);
         if (fd < 0) 
