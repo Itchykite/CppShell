@@ -13,6 +13,7 @@ int main()
 
     std::string input;
 
+    // Loop
     for(;;)
     {
         char* line = readline("$ "); 
